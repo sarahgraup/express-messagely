@@ -16,15 +16,15 @@ class User {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
     const result = await db.query(
-      `INSERT INTO users (username, 
-        password, 
+      `INSERT INTO users (username,
+        password,
         first_name,
-         last_name, 
-         phone, 
+         last_name,
+         phone,
          join_at,
          last_login_at)
          VALUES
-           ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+           ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
          RETURNING username, password, first_name, last_name, phone`,
       [username, hashedPassword, first_name, last_name, phone]);
 
@@ -33,7 +33,7 @@ class User {
   }
 
   /** Authenticate: is username/password valid? Returns boolean. */
-
+  // MUST RETURN BOOLEAN
   static async authenticate(username, password) {
     const result = await db.query(
       `SELECT password
@@ -43,12 +43,11 @@ class User {
     const user = result.rows[0];
     if (user) {
       if (await bcrypt.compare(password, user.password) === true) {
-        return user;
-
+        return true;
       }
     }
 
-
+    return false;
   }
 
   /** Update last_login_at for user */
@@ -60,9 +59,9 @@ class User {
       WHERE username = $1
       RETURNING username`,
       [username]);
-      const user = result.rows[0];
+    const user = result.rows[0];
 
-      if(!user) throw new UnauthorizedError();
+    if (!user) throw new NotFoundError();
   }
 
   /** All: basic info on all users:
@@ -72,8 +71,8 @@ class User {
     const results = await db.query(
       `SELECT username, first_name, last_name
       FROM users`
-  
-    )
+
+    );
     return results.rows;
 
   }
@@ -89,18 +88,21 @@ class User {
 
   static async get(username) {
     const result = await db.query(
-      `SELECT username, 
-      first_name, 
-      last_name, 
-      phone, 
-      join_at, 
+      `SELECT username,
+      first_name,
+      last_name,
+      phone,
+      join_at,
       last_login_at
       FROM users
       WHERE username = $1`,
       [username]);
 
-      return result.rows[0];
+    const user = result.rows[0];
 
+    if (!user) throw new NotFoundError();
+
+    return user;
   }
 
   /** Return messages from this user.
@@ -112,6 +114,37 @@ class User {
    */
 
   static async messagesFrom(username) {
+    const results = await db.query(
+      `SELECT m.id,
+      m.to_username,
+      m.body,
+      m.sent_at,
+      m.read_at,
+      u.username,
+      u.first_name,
+      u.last_name,
+      u.phone
+      FROM messages AS m
+      JOIN users AS u
+      ON m.to_username = u.username
+      WHERE m.from_username = $1`,
+      [username]
+    );
+
+    return results.rows.map(r => r = {
+      id: r.id,
+      body: r.body,
+      read_at: r.read_at,
+      sent_at: r.sent_at,
+      to_user: {
+        first_name: r.first_name,
+        last_name: r.last_name,
+        username: r.username,
+        phone: r.phone
+      },
+
+    });
+
   }
 
   /** Return messages to this user.
@@ -123,8 +156,39 @@ class User {
    */
 
   static async messagesTo(username) {
+    // EACH SELECT COLUMN SHOULD HAVE OWN LINE
+    const results = await db.query(
+      `SELECT m.id,
+      m.from_username,
+      m.body,
+      m.sent_at,
+      m.read_at,
+      u.username,
+      u.first_name,
+      u.last_name,
+      u.phone
+      FROM messages AS m
+      JOIN users AS u
+      ON m.from_username = u.username
+      WHERE m.to_username = $1`,
+      [username]
+    );
+
+    return results.rows.map(r => r = {
+      id: r.id,
+      body: r.body,
+      read_at: r.read_at,
+      sent_at: r.sent_at,
+      from_user: {
+        first_name: r.first_name,
+        last_name: r.last_name,
+        username: r.username,
+        phone: r.phone
+      },
+
+    });
+
   }
 }
-
 
 module.exports = User;
