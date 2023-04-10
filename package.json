@@ -1,0 +1,22 @@
+{
+  "name": "messagely",
+  "version": "1.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest -i"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "body-parser": "*",
+    "cors": "*",
+    "dotenv": "*",
+    "express": "^5.0.0-alpha.8",
+    "express-cors": "*",
+    "jsonwebtoken": "*",
+    "pg": "*",
+    "supertest": "*"
+  }
+}
