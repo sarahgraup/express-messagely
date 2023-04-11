@@ -15,7 +15,7 @@
     "dotenv": "*",
     "express": "^5.0.0-alpha.8",
     "express-cors": "*",
-    "jsonwebtoken": "*",
+    "jsonwebtoken": "^9.0.0",
     "pg": "*",
     "supertest": "*"
   }
