@@ -34,9 +34,9 @@ router.post("/login", async function (req, res, next) {
 
 router.post("/register", async function (req, res, next) {
     if (req.body === undefined) throw new BadRequestError();
-    
-    const {username} = await User.register(req.body);
-    let token = jwt.sign(username, SECRET_KEY);//make object consistent throughout
+
+    const { username } = await User.register(req.body);
+    let token = jwt.sign({ username }, SECRET_KEY);//make object consistent throughout
     User.updateLoginTimestamp(username);
     return res.json({ token });
 
